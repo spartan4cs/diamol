@@ -16,6 +16,7 @@ Docker doesn’t automatically clean up containers or application packages for y
 And if you want to reclaim disk space after following the exercises, you can run this command:
 
 >docker image rm -f $(docker image ls -f reference='diamol/*' -q)
+>docker image rm -f $(docker image ls -q)
 
 Docker is smart about downloading what it needs, so you can safely run these commands at any time. The next time you run containers, if Docker doesn’t find what it needs on your machine, it will download it for you.
 
@@ -63,7 +64,8 @@ TRY IT NOW Run this command to remove all your containers:
 docker container rm --force $(docker container ls --all --quiet)
 
 
-
+ opening up an interactive shell for the Docker container (as done in the previous step with 
+ docker exec -it container-name sh
 
 
 
