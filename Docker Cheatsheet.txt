@@ -5,6 +5,7 @@ scp -i lgtv.pem -r D:/dev/diamol ubuntu@ec2-3-108-62-130.ap-south-1.compute.amaz
 
 
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ch01--------------------------------------------------------------------
 
 
@@ -25,7 +26,7 @@ Docker is smart about downloading what it needs, so you can safely run these com
 
 
 
-
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ch02--------------------------------------------------------------------
 
 TRY IT NOW Enter this command, which will run the Hello World container:
@@ -70,6 +71,10 @@ docker container rm --force $(docker container ls --all --quiet)
 
 
 
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ch03-web-ping--------------------------------------------------------------------
 
 TRY IT NOW Pull the container image for the web-ping application:
@@ -126,6 +131,13 @@ TRY IT NOW The optimized Dockerfile is in the source code for this chapter too. 
  
  
  
+ 
+ 
+ 
+ 
+ 
+ 
+ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  ch04--------------------------------------------------------------------
 
 Listing 4.1 A multi-stage Dockerfile--------------------------
@@ -239,3 +251,98 @@ Listing 4.1 A multi-stage Dockerfile--------------------------
  
  TRY IT NOW Run the Go application image, publishing the host port and connecting to the nat network:
 docker container run -d -p 802:80 --network nat image-gallery
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ch05
+
+TRY IT NOW Open a terminal session and save your Docker Hub ID in a variable. Your Docker ID is your username, not your email address. This is one command that is different on Windows and Linux, so you’ll need to choose the right option:
+
+ # using PowerShell on Windows
+
+ $dockerId="<your-docker-id-goes-here>"  
+
+# using Bash on Linux or Mac 
+
+export dockerId="<your-docker-id-goes-here>"
+
+
+TRY IT NOW Log in to Docker Hub. Hub is the default registry, so you don’t need to specify a domain name:
+ docker login --username $dockerId
+
+
+TRY IT NOW Create a new reference for your existing image, tagging it as version 1:
+ docker image tag image-gallery $dockerId/image-gallery:v1
+
+
+
+TRY IT NOW List the image-gallery image references:
+ docker image ls --filter reference=image-gallery --filter reference='*/image-gallery'
+
+
+
+TRY IT NOW List the image-gallery image references:
+ docker image push $dockerId/image-gallery:v1
+
+
+
+TRY IT NOW Run the Docker registry in a container, using my image:
+ # run the registry with a restart flag so the container gets 
+# restarted whenever you restart Docker: 
+docker container run -d -p 5000:5000 --restart always diamol/registry
+
+
+run ping registry.local
+
+
+TRY IT NOW Windows, Linux, and Mac machines all use the same hosts file format, but the file paths are different. The command is also different on Windows, so you’ll need to choose the right one:
+creates that alias. It will give your computer the name registry.local 
+ # using PowerShell on Windows 
+Add-Content -Value "127.0.0.1 registry.local" -Path /windows/system32/drivers/etc/hosts  
+# using Bash on Linux or Mac 
+echo $'\n127.0.0.1 registry.local' | sudo tee -a /etc/hosts
+
+
+TRY IT NOW Tag your image-gallery image with your registry domain:
+ docker image tag image-gallery registry.local:5000/gallery/ui:v1
+
+TRY IT NOW List the information about your Docker Engine and check your registry is in the insecure registries list:
+ docker info
+
+
+TRY IT NOW Push your tagged image:
+ docker image push registry.local:5000/gallery/ui:v1
+
+
+TRY IT NOW  List all repositories (effectively images):
+curl -X GET http://registry.local:5000/v2/_catalog
+> {"repositories":["redis","ubuntu"]}
+
+
+TRY IT NOW Create a few new tags for the Go application you have packaged in the image to indicate the major, minor, and patch release versions:
+
+docker image tag image-gallery registry.local:5000/gallery/ui:latest
+docker image tag image-gallery registry.local:5000/gallery/ui:2
+docker image tag image-gallery registry.local:5000/gallery/ui:2.1
+docker image tag image-gallery registry.local:5000/gallery/ui:2.1.106
+ 
+
+TRY IT NOW  Pushes all tags for the repo
+ docker image push registry.local:5000/gallery/ui
+
+TRY IT NOW  List all repositories adn tags
+curl http://registry.local:5000/v2/gallery/ui/tags/list
+ 
+TRY IT NOW   Get manifest for latest
+curl --head   http://registry.local:5000/v2/gallery/ui/manifests/latest   -H 'Accept: application/vnd.docker.distribution.manifest.v2+json'
+
+Output headers include Docker-Content-Digest, this is the manifest you need
+e.g.
+Docker-Content-Digest: sha256:127d0ed6f7a8d148a39b7ea168c083694d030e2bffbda60cb53057e731114fbb
+
+TRY IT NOW  Delete
+curl -X DELETE   http://registry.local:5000/v2/gallery/ui/manifests/sha256:127d0ed6f7a8d148a39b7ea168c083694d030e2bffbda60cb53057e731114fbb
+
+TRY IT NOW  Check
+curl http://registry.local:5000/v2/gallery/ui/tags/list
