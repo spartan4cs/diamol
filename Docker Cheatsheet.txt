@@ -346,3 +346,26 @@ curl -X DELETE   http://registry.local:5000/v2/gallery/ui/manifests/sha256:127d0
 
 TRY IT NOW  Check
 curl http://registry.local:5000/v2/gallery/ui/tags/list
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ch06
+
+
+TRY IT NOW Open a terminal session and run two containers from the same image. The application in the image writes a random number to a file in the container:
+
+docker container run --name rn1 diamol/ch06-random-number 
+docker container run --name rn2 diamol/ch06-random-number
+
+
+TRY IT NOW Use docker container cp to copy the random number file from each of the containers, and then check the contents:
+ docker container cp rn1:/random/number.txt number1.txt
+ docker container cp rn2:/random/number.txt number2.txt
+ cat number1.txt
+ cat number2.txt
