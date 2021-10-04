@@ -13,7 +13,7 @@ ch01--------------------------------------------------------------------
 Docker doesn’t automatically clean up containers or application packages for you. When you quit Docker Desktop (or stop the Docker service), all your containers stop and they don’t use any CPU or memory, but if you want to, you can clean up at the end of every chapter by running this command:
 
 >docker container rm -f $(docker container ls -aq)
-
+>docker rm -f $(docker ps -aq)
 And if you want to reclaim disk space after following the exercises, you can run this command:
 
 >docker image rm -f $(docker image ls -f reference='diamol/*' -q)
@@ -369,3 +369,166 @@ TRY IT NOW Use docker container cp to copy the random number file from each of t
  docker container cp rn2:/random/number.txt number2.txt
  cat number1.txt
  cat number2.txt
+ 
+ 
+ 
+ TRY IT NOW Run these commands to start a container that prints out its file contents, then change the file, and start the container again to print out the new file contents:
+ docker container run --name f1 diamol/ch06-file-display
+ echo "http://eltonstoneman.com" > url.txt
+ docker container cp url.txt f1:/input.txt
+ docker container start --attach f1
+ 
+ 
+ 
+ TRY IT NOW Start a new container to check that the file in the image is unchanged. Then remove the original container and confirm that the data is gone:
+ docker container run --name f2 diamol/ch06-file-display
+ docker container rm -f f1
+ docker container cp f1:/input.txt .
+ 
+ 
+ 
+ TRY IT NOW Run a container for the to-do list app, and have a look at the volume Docker created:
+ docker container run --name todo1 -d -p 8010:80 diamol/ch06-todo-list
+ docker container inspect --format '{{.Mounts}}' todo1
+ docker volume ls
+ 
+ 
+ 
+ 
+ TRY IT NOW Run a second to-do list container and check the contents of the data directory. Then compare that to another new container that shares the volumes from the first container (the exec commands are slightly different for Windows and Linux):
+
+ # this new container will have its own volume
+ docker container run --name todo2 -d diamol/ch06-todo-list
+ 
+ # on Linux:
+ docker container exec todo2 ls /data
+ 
+ # on Windows:
+ docker container exec todo2 cmd /C "dir C:\data"
+ 
+ # this container will share the volume from todo1
+ docker container run -d --name t3 --volumes-from todo1 diamol/ch06-todo-list
+ 
+ # on Linux:
+ docker container exec t3 ls /data
+ 
+ # on Windows:
+ docker container exec t3 cmd /C "dir C:\data"
+ 
+ 
+ 
+ 
+ TRY IT NOW Create a volume and use it in a container for version 1 of the to-do app. Then add some data in the UI and upgrade the app to version 2. The filesystem paths for the container need to match the operating system, so I’m using variables to make copy and pasting easier:
+
+ # save the target file path in a variable:
+ target='/data' # for Linux containers
+ $target='c:\data' # for Windows containers
+ 
+ # create a volume to store the data:
+ docker volume create todo-list
+ 
+ # run the v1 app, using the volume for app storage:
+ docker container run -d -p 8011:80 -v todo-list:$target --name todo-v1 diamol/ch06-todo-list
+ 
+ # add some data through the web app at http://localhost:8011
+ 
+ # remove the v1 app container:
+ docker container rm -f todo-v1
+ 
+ # and run a v2 container using the same volume for storage:
+ docker container run -d -p 8011:80 -v todo-list:$target --name todo-v2 diamol/ch06-todo-list:v2
+ 
+ 
+ 
+ 
+ 
+ 
+ TRY IT NOW I really do have a server with a RAID array, but you may not, so we’ll just create a local directory on your host computer and bind mount it into a container. Again, the filesystem paths need to match the host operating system, so I’ve declared variables for the source path on your machine and the target path for the container. Note the different lines for Windows and Linux:
+
+ $source="$(pwd)\databases".ToLower(); $target="c:\data" # Windows
+ source="$(pwd)/databases" && target='/data'             # Linux
+ 
+ mkdir ./databases
+ 
+ docker container run --mount type=bind,source=$source,target=$target -d -p 8012:80 diamol/ch06-todo-list
+ 
+ curl http://localhost:8012
+ 
+ ls ./databases
+ 
+ 
+ 
+ 
+ 
+ 
+ TRY IT NOW The to-do application will load an extra configuration file from the /app/config path if it exists. Run a container that bind-mounts a local directory to that location, and the app will use the host’s configuration file. Start by navigating to your local copy of the DIAMOL source code, and then run these commands:
+
+ cd ./ch06/exercises/todo-list
+ 
+ # save the source path as a variable:
+ $source="$(pwd)\config".ToLower(); $target="c:\app\config" # Windows
+ source="$(pwd)/config" && target='/app/config'             # Linux
+ 
+ # run the container using the mount:
+ docker container run --name todo-configured -d -p 8013:80 --mount type=bind,source=$source,target=$target,readonly diamol/ch06-todo-list
+ 
+ # check the application:
+ curl http://localhost:8013
+ 
+ # and the container logs:
+ docker container logs todo-configured
+ 
+ 
+ 
+ 
+ TRY IT NOW Run the container without a mount, and it will list the directory contents from the image. Run it again with a mount, and it will list the contents of the source directory (there are variables again here to support Windows and Linux):
+
+ cd ./ch06/exercises/bind-mount
+ 
+ $source="$(pwd)\new".ToLower(); $target="c:\init" # Windows
+ source="$(pwd)/new" && target='/init'             # Linux
+ 
+ docker container run diamol/ch06-bind-mount
+ 
+ docker container run --mount type=bind,source=$source,target=$target diamol/ch06-bind-mount
+ 
+ 
+ 
+ TRY IT NOW The behavior of single-file mounts is different on Linux and Windows. If you have Linux and Windows containers available, you can see that in action:
+
+ cd ./ch06/exercises/bind-mount
+ 
+ # on Linux:
+ docker container run --mount type=bind,source="$(pwd)/new/123.txt",target=/init/123.txt diamol/ch06-bind-mount
+ 
+ # on Windows:
+ 
+ docker container run --mount type=bind,source="$(pwd)/new/123.txt",target=C:\init\123.txt diamol/ch06-bind-mount
+ 
+ docker container run diamol/ch06-bind-mount
+ 
+ docker container run --mount type=bind,source="$(pwd)/new/123.txt",target=/init/123.txt diamol/ch06-bind-mount
+ 
+ 
+ 
+ 
+ 
+ TRY IT NOW  lab06
+docker container run -d -p 8015:80 diamol/ch06-lab
+docker volume create ch06-lab
+
+To put that together, we'll run a container which uses:
+	a read-only bind mount to load the new config file into the container
+	a read-write volume mount as the target for the database file
+
+And this on Linux:
+
+configSource="$(pwd)/solution"
+configTarget='/app/config'
+dataTarget='/new-data'
+
+ docker container run -d -p 8016:80 --mount type=bind,source=$configSource,target=$configTarget,readonly --volume ch06-lab:$dataTarget diamol/ch06-lab
+
+
+
+
