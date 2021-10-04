@@ -17,7 +17,15 @@ Docker doesn’t automatically clean up containers or application packages for y
 And if you want to reclaim disk space after following the exercises, you can run this command:
 
 >docker image rm -f $(docker image ls -f reference='diamol/*' -q)
->docker image rm -f $(docker image ls -q)
+>
+
+
+
+docker rm -f $(docker ps -aq)
+docker image rm -f $(docker image ls -q)
+docker image ls
+docker ps
+
 
 Docker is smart about downloading what it needs, so you can safely run these commands at any time. The next time you run containers, if Docker doesn’t find what it needs on your machine, it will download it for you.
 
@@ -528,6 +536,11 @@ configTarget='/app/config'
 dataTarget='/new-data'
 
  docker container run -d -p 8016:80 --mount type=bind,source=$configSource,target=$configTarget,readonly --volume ch06-lab:$dataTarget diamol/ch06-lab
+
+root@ip-172-31-34-29:/home/ubuntu/aakash404/diamol/ch06/lab# docker container inspect --format '{{.Mounts}}' f3
+[{bind  /home/ubuntu/aakash404/diamol/ch06/lab/solution /app/config   false rprivate} {volume 7508b6ace03487f687a290222e9cb72415c9700547db43a7155f555f739c650a /var/lib/docker/volumes/7508b6ace03487f687a290222e9cb72415c9700547db43a7155f555f739c650a/_data /data local  true } {volume ch06-lab /var/lib/docker/volumes/ch06-lab/_data /new-data local z true }]
+
+
 
 
 
