@@ -13,27 +13,104 @@ docker ps
 
 ch07-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+TRY IT NOW Open a terminal and create the Docker network. Then browse to the folder with the Compose file from listing 7.1, and then run the app using the docker-compose command line:
+	docker network create nat
+	cd ./ch07/exercises/todo-list
+	docker-compose up
 
 
+TRY IT NOW Open a terminal session to the root of your DIAMOL source code, and then navigate to the image gallery folder and run the app:
+	 cd ./ch07/exercises/image-of-the-day
+	 docker-compose up --detach
+
+
+TRY IT NOW In the same terminal session, use Docker Compose to increase the scale of the iotd service, and then refresh the web page a few times and check the logs of the iotd containers:
+	 docker-compose up -d --scale iotd=3
+	 
+	 # browse to http://localhost:8010 and refresh
+	 docker-compose logs --tail=1 iotd
+
+
+TRY IT NOW In the same terminal session, stop and start the app with Docker Compose commands, and then list all running containers with the Docker CLI:
+
+	 docker-compose stop
+	 docker-compose start
+	 docker container ls
+ 
+ 
+TRY IT NOW In the same terminal session--because Compose needs to use the same YAML file--use Docker Compose to bring the application down and back up again. Then check the scale by listing running containers:
+
+	docker-compose down
+	docker-compose up -d
+	docker container ls
+ 
+TRY IT NOW In the same terminal session, use Docker Compose to bring the application up with the API running at a scale of three. Then connect to a session in the web container--choose the Linux or Windows command to run--and perform a DNS lookup:
+
+	 docker-compose up -d --scale iotd=3
+	 
+	 # for Linux containers:
+	 docker container exec -it image-of-the-day_image-gallery_1 sh
+	 
+	 # for Windows containers:
+	 docker container exec -it image-of-the-day_image-gallery_1 cmd
+	 
+	 nslookup accesslog
+	 
+	 exit
+ 
+ 
+ 
+TRY IT NOW Still in the same terminal session, use the Docker CLI to remove the accesslog container, and then use Docker Compose to bring the app back to the desired state. Then connect to the web container again, using sh in Linux or cmd in Windows, and run some more DNS lookups:
+
+	 docker container rm -f image-of-the-day_accesslog_1
+	 docker-compose up -d --scale iotd=3
+	 
+	 # for Linux containers:
+	 docker container exec -it image-of-the-day_image-gallery_1 sh
+	 
+	 # for Windows containers:
+	 docker container exec -it image-of-the-day_image-gallery_1 cmd
+	 
+	 nslookup accesslog
+	 
+	 nslookup iotd
+	 
+	 exit
+
+
+
+
+TRY IT NOW Open a terminal session at the root of the code for the book, and switch to the directory for this exercise. In that directory you’ll see the Docker Compose file and also the JSON file that contains the secret to load into the application container. Start the app using docker-compose up in the usual way:
+
+	 cd ./ch07/exercises/todo-list-postgres
+	 
+	 # for Linux containers:
+	 docker-compose up -d
+	 
+	 # OR for Windows containers (which use different file paths):
+	 
+	 docker-compose -f docker-compose-windows.yml up -d
+	 
+	 docker-compose ps
 
 
 
 
 DIAMOL Chapter 7 Lab - Sample Solution
 
-Dev environment
-This configuration uses Sqlite for data storage and published the web app to port 8020.
-Run from this directory with:
-docker-compose -f docker-compose-dev.yml up -d
+		Dev environment
+		This configuration uses Sqlite for data storage and published the web app to port 8020.
+		Run from this directory with:
+		docker-compose -f docker-compose-dev.yml up -d
 
 
-Test environment
-mkdir -p /data/postgres
-docker-compose -f docker-compose-test.yml up -d
+		Test environment
+		mkdir -p /data/postgres
+		docker-compose -f docker-compose-test.yml up -d
 
-Or on Windows:
-mkdir -p /data/postgres
-docker-compose -f docker-compose-test-windows.yml up -d
+		Or on Windows:
+		mkdir -p /data/postgres
+		docker-compose -f docker-compose-test-windows.yml up -d
 
 
 
