@@ -2,6 +2,8 @@ Docker cheatsheet
 ----ec2
 scp -i lgtv.pem -r D:/dev/diamol ubuntu@ec2-3-108-62-130.ap-south-1.compute.amazonaws.com:/home/ubuntu/aakash404
 
+scp -i lgtv.pem  ubuntu@ec2-13-233-85-212.ap-south-1.compute.amazonaws.com:/home/ubuntu/aakash404/diamol/ch07/exercises/image-of-the-day/docker-compose.png D:/dev/diamol 
+
 docker rm -f $(docker ps -aq)
 docker image rm -f $(docker image ls -q)
 docker image ls
